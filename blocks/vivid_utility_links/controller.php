@@ -1,16 +1,14 @@
 <?php
 namespace Concrete\Package\VividStore\Block\VividUtilityLinks;
+
 use \Concrete\Core\Block\BlockController;
-use Package;
 use Core;
 use View;
-use User;
-use UserInfo;
-use \Concrete\Package\VividStore\Src\VividStore\Cart\Cart as VividCart;
+use \Concrete\Package\VividStore\Src\VividStore\Cart\Cart as StoreCart;
+use \Concrete\Package\VividStore\Src\VividStore\Utilities\Price as StorePrice;
+use \Concrete\Package\VividStore\Src\VividStore\Utilities\Calculator as StoreCalculator;
 
-
-defined('C5_EXECUTE') or die("Access Denied.");
-class Controller extends BlockController
+class controller extends BlockController
 {
     protected $btTable = 'btVividUtilityLinks';
     protected $btInterfaceWidth = "450";
@@ -29,36 +27,33 @@ class Controller extends BlockController
     }
     public function view()
     {
-        $pkg = Package::getByHandle('vivid_store');    
-        $packagePath = $pkg->getRelativePath();
-        $this->addFooterItem(Core::make('helper/html')->javascript($packagePath.'/js/vivid-store.js','vivid-store'));
-        $this->addHeaderItem(Core::make('helper/html')->css($packagePath.'/css/vivid-store.css','vivid-store'));    
-        $this->set("itemCount",VividCart::getTotalItemsInCart());
-        $this->addHeaderItem("
-            <script type=\"text/javascript\">
-                var PRODUCTMODAL = '".View::url('/productmodal')."';
-                var CARTURL = '".View::url('/cart')."';
-                var CHECKOUTURL = '".View::url('/checkout')."';
-                var QTYMESSAGE = '".t('Quantity must be greater than zero')."';
-            </script>
-        ");
+        $this->set("itemCount", StoreCart::getTotalItemsInCart());
+        $this->set("total", StorePrice::format(StoreCalculator::getSubTotal()));
+        $js = \Concrete\Package\VividStore\Controller::returnHeaderJS();
+        $this->requireAsset('javascript', 'jquery');
+        $this->addFooterItem($js);
+        $this->requireAsset('javascript', 'vivid-store');
+        $this->requireAsset('css', 'vivid-store');
     }
     public function save($args)
     {
         $args['showCartItems'] = isset($args['showCartItems']) ? 1 : 0;
+        $args['showCartTotal'] = isset($args['showCartTotal']) ? 1 : 0;
         $args['showSignIn'] = isset($args['showSignIn']) ? 1 : 0;
+        $args['showCheckout'] = isset($args['showCheckout']) ? 1 : 0;
+        $args['showGreeting'] = isset($args['showGreeting']) ? 1 : 0;
         parent::save($args);
     }
     public function validate($args)
     {
-        $e = Core::make("helper/validation/error"); 
-        if($args['cartLabel']==""){
+        $e = Core::make("helper/validation/error");
+        if ($args['cartLabel']=="") {
             $e->add(t('Cart Label must be set'));
         }
-        if(strlen($args['cartLabel']) > 255){
+        if (strlen($args['cartLabel']) > 255) {
             $e->add(t('Cart Link Label exceeds 255 characters'));
         }
-        if(strlen($args['itemsLabel']) > 255){
+        if (strlen($args['itemsLabel']) > 255) {
             $e->add(t('Cart Items Label exceeds 255 characters'));
         }
         return $e;

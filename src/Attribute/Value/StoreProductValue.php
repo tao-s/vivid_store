@@ -1,15 +1,37 @@
 <?php
 namespace Concrete\Package\VividStore\Src\Attribute\Value;
+
 use Database;
 use \Concrete\Core\Attribute\Value\Value as Value;
-defined('C5_EXECUTE') or die(_("Access Denied."));
-class StoreProductValue extends Value {
 
-    public function setProduct($product) {
+/**
+ * @Entity
+ * @Table(name="VividStoreProductAttributeValues")
+ */
+class StoreProductValue extends Value
+{
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $oID;
+
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $akID;
+
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $avID;
+
+    public function setProduct($product)
+    {
         $this->product = $product;
     }
     
-    public static function getByID($avID) {
+    public static function getByID($avID)
+    {
         $cav = new StoreProductValue();
         $cav->load($avID);
         if ($cav->getAttributeValueID() == $avID) {
@@ -17,10 +39,11 @@ class StoreProductValue extends Value {
         }
     }
 
-    public function delete() {
+    public function delete()
+    {
         $db = Database::get();
         $db->Execute('delete from VividStoreProductAttributeValues where pID = ? and akID = ? and avID = ?', array(
-            $this->product->getProductID(), 
+            $this->product->getProductID(),
             $this->attributeKey->getAttributeKeyID(),
             $this->getAttributeValueID()
         ));

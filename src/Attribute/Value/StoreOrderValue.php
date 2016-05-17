@@ -1,15 +1,37 @@
 <?php
 namespace Concrete\Package\VividStore\Src\Attribute\Value;
+
 use Database;
 use \Concrete\Core\Attribute\Value\Value as Value;
-defined('C5_EXECUTE') or die(_("Access Denied."));
-class StoreOrderValue extends Value {
 
-    public function setOrder($order) {
+/**
+ * @Entity
+ * @Table(name="VividStoreOrderAttributeValues")
+ */
+class StoreOrderValue extends Value
+{
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $oID;
+
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $akID;
+
+    /**
+     * @Id @Column(type="integer")
+     */
+    protected $avID;
+
+    public function setOrder($order)
+    {
         $this->order = $order;
     }
     
-    public static function getByID($avID) {
+    public static function getByID($avID)
+    {
         $cav = new StoreOrderValue();
         $cav->load($avID);
         if ($cav->getAttributeValueID() == $avID) {
@@ -17,10 +39,11 @@ class StoreOrderValue extends Value {
         }
     }
 
-    public function delete() {
+    public function delete()
+    {
         $db = Database::get();
         $db->Execute('delete from VividStoreOrderAttributeValues where oID = ? and akID = ? and avID = ?', array(
-            $this->order->getOrderID(), 
+            $this->order->getOrderID(),
             $this->attributeKey->getAttributeKeyID(),
             $this->getAttributeValueID()
         ));

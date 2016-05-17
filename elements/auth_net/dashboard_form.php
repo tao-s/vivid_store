@@ -1,14 +1,14 @@
 <?php 
-defined('C5_EXECUTE') or die(_("Access Denied.")); 
+defined('C5_EXECUTE') or die(_("Access Denied."));
 extract($vars);
 ?>
 <div class="form-group">
     <label><?=t('Test Mode')?></label>
-    <?php echo $form->select('authnetTestmode',array(false=>'No',true=>'Yes'),$authnetTestmode); ?>
+    <?php echo $form->select('authnetTestmode', array(false=>'No', true=>'Yes'), $authnetTestmode); ?>
 </div>
 
 <div class="form-group">
-    <label><?=t("Auth.net Login ID")?></label>
+    <label><?=t("API Login ID")?></label>
     <input type="text" name="authnetLoginID" value="<?=$authnetLoginID?>" class="form-control">
 </div>
 

@@ -1,15 +1,15 @@
 <?php
 namespace Concrete\Package\VividStore\Block\VividProduct;
+
 use \Concrete\Core\Block\BlockController;
-use Package;
 use Core;
 use View;
 use Page;
-use URL;
-use \Concrete\Package\VividStore\Src\VividStore\Product\Product as VividProduct;
+use \Concrete\Package\VividStore\Src\VividStore\Product\Product as StoreProduct;
+use \Concrete\Package\VividStore\Src\VividStore\Product\ProductVariation\ProductVariation as StoreProductVariation;
 
 defined('C5_EXECUTE') or die("Access Denied.");
-class Controller extends BlockController
+class controller extends BlockController
 {
     protected $btTable = 'btVividStoreProduct';
     protected $btInterfaceWidth = "450";
@@ -28,30 +28,44 @@ class Controller extends BlockController
     }
     public function view()
     {
-            
-        if($this->productLocation == 'page'){
+        if ($this->productLocation == 'page') {
             $cID = Page::getCurrentPage()->getCollectionID();
-            $p = VividProduct::getByCollectionID($cID);
+            $product = StoreProduct::getByCollectionID($cID);
         } else {
-            $p = VividProduct::getByID($this->pID);
+            $product = StoreProduct::getByID($this->pID);
         }
-        $this->set('p',$p);
+
+        if ($product) {
+            if ($product->hasVariations()) {
+                $variations = StoreProductVariation::getVariationsForProduct($product);
+
+                $variationLookup = array();
+
+                if (!empty($variations)) {
+                    foreach ($variations as $variation) {
+                        // returned pre-sorted
+                        $ids = $variation->getOptionItemIDs();
+                        $variationLookup[implode('_', $ids)] = $variation;
+                    }
+                }
+
+                $product->setInitialVariation();
+                $this->set('variationLookup', $variationLookup);
+            }
+
+            $this->set('product', $product);
+            $this->set('optionGroups', $product->getProductOptionGroups());
+            $this->set('optionItems', $product->getProductOptionItems(true));
+        }
+        $js = \Concrete\Package\VividStore\Controller::returnHeaderJS();
+        $this->requireAsset('javascript', 'jquery');
+        $this->addFooterItem($js);
+        $this->requireAsset('javascript', 'vivid-store');
+        $this->requireAsset('css', 'vivid-store');
     }
-    public function registerViewAssets()
+    public function registerViewAssets($outputContent = '')
     {
-        
-        $pkg = Package::getByHandle('vivid_store');
-        $packagePath = $pkg->getRelativePath();
-        $this->addHeaderItem("
-            <script type=\"text/javascript\">
-                var PRODUCTMODAL = '".View::url('/productmodal')."';
-                var CARTURL = '".View::url('/cart')."';
-                var CHECKOUTURL = '".View::url('/checkout')."';
-                var QTYMESSAGE = '".t('Quantity must be greater than zero')."';
-            </script>
-        ");
-        $this->addFooterItem(Core::make('helper/html')->javascript($packagePath.'/js/vivid-store.js','vivid-store'));
-        $this->addHeaderItem(Core::make('helper/html')->css($packagePath.'/css/vivid-store.css','vivid-store'));    
+        $this->requireAsset('core/lightbox');
     }
     public function save($args)
     {
@@ -65,8 +79,8 @@ class Controller extends BlockController
         $args['showIsFeatured'] = isset($args['showIsFeatured']) ? 1 : 0;
         $args['showGroups'] = isset($args['showGroups']) ? 1 : 0;
         $args['showDimensions'] = isset($args['showDimensions']) ? 1 : 0;
-        if($args['productLocation']=='search'){
-            if(!is_numeric($args['pID']) || $args['pID']<1){
+        if ($args['productLocation']=='search') {
+            if (!is_numeric($args['pID']) || $args['pID']<1) {
                 $args['productLocation'] = "page";
             }
         }
